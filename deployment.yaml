@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp1
+  template:
+    metadata:
+      labels:
+        app: myapp1
+    spec:
+      containers:
+      - name: myapp1
+        image: saitejacontainerregistry.azurecr.io/saitejaproject:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "mongodb://mongodb-service1:27017/mydatabase"
+        imagePullPolicy: "Always"
+      imagePullSecrets:
+        - name: "container-registry-secret"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service1
+spec:
+  selector:
+    app: myapp1
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 31000
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb1
+  template:
+    metadata:
+      labels:
+        app: mongodb1
+    spec:
+      containers:
+      - name: mongodb1
+        image: docker.io/library/mongo:latest
+        ports:
+        - containerPort: 27017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service1
+spec:
+  selector:
+    app: mongodb1
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
